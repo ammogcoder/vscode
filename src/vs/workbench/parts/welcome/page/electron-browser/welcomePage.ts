@@ -39,6 +39,7 @@ import { IWorkspaceIdentifier, getWorkspaceLabel, ISingleFolderWorkspaceIdentifi
 import { IEditorInputFactory, EditorInput } from 'vs/workbench/common/editor';
 import { getIdAndVersionFromLocalExtensionId } from 'vs/platform/extensionManagement/node/extensionManagementUtil';
 import { INotificationService, Severity } from 'vs/platform/notification/common/notification';
+import { IOpenerService } from 'vs/platform/opener/common/opener';
 
 used();
 
@@ -232,6 +233,7 @@ class WelcomePage {
 		@IExtensionTipsService private tipsService: IExtensionTipsService,
 		@IExtensionsWorkbenchService private extensionsWorkbenchService: IExtensionsWorkbenchService,
 		@ILifecycleService lifecycleService: ILifecycleService,
+		@IOpenerService private openerService: IOpenerService,
 		@ITelemetryService private telemetryService: ITelemetryService
 	) {
 		this.disposables.push(lifecycleService.onShutdown(() => this.dispose()));
@@ -249,6 +251,18 @@ class WelcomePage {
 			resource,
 			telemetryFrom,
 			onReady: (container: HTMLElement) => this.onReady(container, recentlyOpened, installedExtensions)
+		});
+
+		// TODO: Check redirect links.
+		const readMoreUrl = 'https://code.visualstudio.com/docs/supporting/faq#_how-to-disable-telemetry-reporting';
+		this.notificationService.notify({
+			message: localize('welcomePage.telemetryNotice', "Help make VS Code even better: Microsoft collects usage data, read our [privacy statement]({0}). To opt out, learn more [here]({1}).")
+				.replace('{0}', 'https://go.microsoft.com/fwlink/?LinkID=528096&clcid=0x409')
+				.replace('{1}', readMoreUrl),
+			severity: Severity.Info,
+			actions: {
+				primary: [new Action('telemetryNotice.readMore', localize('telemetryNotice.readMore', "Read More"), '', true, () => this.openerService.open(URI.parse(readMoreUrl)))]
+			}
 		});
 	}
 
